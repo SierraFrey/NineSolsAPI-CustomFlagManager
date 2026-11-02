@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using BepInEx.Bootstrap;
 using I2.Loc;
 using NineSolsAPI.Utils;
@@ -6,8 +8,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace NineSolsAPI.Menu;
 
@@ -143,7 +143,10 @@ internal class TitleScreenModList
     private static string modList_GameObject_Label_Text_String = "Mod List";
     private static string URLConfirm_String = "Open the download page of {0}?\n({1})";
     private static string NotSynced_ConfirmString = "This save's mods are not synced with your mods. Load anyway?\n({0} missing)\n({1} different version)\n({2} new)";
-    
+
+    private static readonly Color RED = new Vector4(1f, 0f, 0f, 0.25f);
+    private static readonly Color ORANGE = new Vector4(1f, 0.5f, 0f, 0.25f);
+
     internal static bool CheckModDesyncsBeforeLoadSave(SaveSlotUIButton slotButtonInstance)
     {
         if (startGameConfirmed)
@@ -168,6 +171,28 @@ internal class TitleScreenModList
 
     private static void LoadModList()
     {
+        var SavePanel_BackButton = GameObject.Find("MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/SavePanel_BackButton");
+        buttonClone = ObjectUtils.InstantiateAutoReference(SavePanel_BackButton, modList_GameObject.transform.Find("Viewport/Content"), false);
+        buttonClone.transform.Find("Text (TMP)").GetComponent<Localize>().enabled = false;
+        GameObject.Destroy(buttonClone.transform.Find("BackgroundImage/Frame").gameObject);
+
+        var buttonCloneText = buttonClone.transform.Find("Text (TMP)").gameObject.GetComponent<TextMeshProUGUI>();
+        buttonCloneText.text = "";
+        buttonCloneText.characterSpacing = 0;
+        buttonCloneText.fontSizeMin = 26;
+
+        buttonClone.transform.localPosition = new Vector3(220f, -50f, 0f);
+        buttonClone.transform.Find("Outline").gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(300, -5);
+        buttonClone.transform.Find("BackgroundImage").gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(295, -9);
+        buttonClone.GetComponent<UIControlButton>().onSubmit = new UnityEvent();
+
+        var buttonCloneColorOverlay = ObjectUtils.InstantiateAutoReference(buttonClone.transform.Find("BackgroundImage").gameObject, buttonClone.transform, false);
+        buttonCloneColorOverlay.name = "overlay";
+        buttonCloneColorOverlay.GetComponent<Image>().color = new Vector4(0, 0, 0, 0);
+
+        buttonClone.SetActive(false);
+        buttonClone.name = "buttonClone";
+
         for (int i = 0; i < 5; i++)
         {
             modButtons[i] = new Dictionary<string, GameObject>();
@@ -180,26 +205,27 @@ internal class TitleScreenModList
             {
                 ModData data = slotModDict.ElementAt(j).Value;
 
-                // Add mod list element
                 GameObject newButton = ObjectUtils.InstantiateAutoReference(buttonClone, buttonClone.transform.parent, false);
                 modButtons[i].Add(data.guid, newButton);
+                newButton.name = data.guid;
                 newButton.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, (-50 * j));
-                var newButtonText = newButton.transform.GetChild(0).GetComponent<Text>();
+                var newButtonText = newButton.transform.Find("Text (TMP)").gameObject.GetComponent<TextMeshProUGUI>();
                 newButtonText.text = $"{data.name} - {data.version}";
 
+                var newButtonColorOverlay = newButton.transform.Find("overlay").GetComponent<Image>();
                 // Check if mod is missing
                 if (!modDict.ContainsKey(data.guid))
                 {
-                    newButtonText.color = new Color(1f, 0f, 0f);
+                    newButtonColorOverlay.color = RED;
                     desyncTracker[(int)Desyncs.Missing][i]++;
                 }
                 // Check if mod is different version
                 else if (modDict[data.guid].version != data.version)
                 {
-                    newButtonText.color = new Color(1f, 0.5f, 0f);
+                    newButtonColorOverlay.color = ORANGE;
                     desyncTracker[(int)Desyncs.DifferentVersion][i]++;
                 }
-
+                
                 if (data.url != "")
                 {
                     newButton.GetComponent<Button>().onClick.AddListener(() =>
@@ -207,6 +233,7 @@ internal class TitleScreenModList
                     Application.OpenURL(data.url)));
                 }
             }
+            
             // Check for new mod(s)
             foreach (ModData data in modDict.Values)
             {
@@ -255,11 +282,14 @@ internal class TitleScreenModList
         modList_GameObject = ObjectUtils.InstantiateAutoReference(ScrollView, GameObject.Find("/MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel").transform, false);
         modList_GameObject.SetActive(true);
         modList_GameObject.name = "modList_GameObject";
-
+        
+        GameObject.Destroy(modList_GameObject.transform.Find("Viewport/Content/ButtonCandidate1").gameObject);
+        GameObject.Destroy(modList_GameObject.transform.Find("Viewport/Content/ButtonCandidate2").gameObject);
         var modList_GameObject_LayoutElement = modList_GameObject.AddComponent<LayoutElement>();
         modList_GameObject_LayoutElement.ignoreLayout = true;
         modList_GameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(140, -137);
         modList_GameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(440, 610);
+        modList_GameObject.GetComponent<Image>().color = new Vector4(0f, 0f, 0f, 0.15f);
 
         // Mod list label
         var modList_GameObject_Label = new GameObject("Mod List");
@@ -282,11 +312,5 @@ internal class TitleScreenModList
             GameObject slot = GameObject.Find($"{slotpath}SaveSlotContainer_Slot{i}/SaveSlot{i}");
             slot.GetComponent<SaveSlotUIButton>().OnSelectedEvent.AddListener(DisplayModListForSelectedFile);
         }
-        
-        // Cleanup of modList_GameObject elements and preparation of DisplayModListForSelectedFile()
-        buttonClone = modList_GameObject.transform.Find("Viewport/Content/ButtonCandidate1").gameObject;
-        buttonClone.name = "buttonClone";
-        buttonClone.SetActive(false);
-        GameObject.Destroy(modList_GameObject.transform.Find("Viewport/Content/ButtonCandidate2").gameObject);
     }
 }
