@@ -139,6 +139,7 @@ internal class TitleScreenModList
 
     private static GameObject modList_GameObject = null!;
     private static GameObject buttonClone = null!;
+    private static GameObject modList_GameObject_saveIndexLabel = null!;
 
     private static string modList_GameObject_Label_Text_String = "Mod List";
     private static string URLConfirm_String = "Open the download page of {0}?\n({1})";
@@ -253,12 +254,16 @@ internal class TitleScreenModList
         {
             LoadModList();
         }
-        int slotNumber = (int)button.name[8] - 48;
+
+        char slotNumber_CHAR = button.name[8];
+        modList_GameObject_saveIndexLabel.GetComponent<TextMeshProUGUI>().text = ((char)(slotNumber_CHAR + 1)).ToString();
+
+        int slotNumber_INT = slotNumber_CHAR - 48;
         for (int i = 0; i < 5; i++)
         {
             foreach (var buttonoff in modButtons[i])
             {
-                buttonoff.Value.SetActive(slotNumber == i);
+                buttonoff.Value.SetActive(slotNumber_INT == i);
             }
         }
     }
@@ -287,7 +292,7 @@ internal class TitleScreenModList
         GameObject.Destroy(modList_GameObject.transform.Find("Viewport/Content/ButtonCandidate2").gameObject);
         var modList_GameObject_LayoutElement = modList_GameObject.AddComponent<LayoutElement>();
         modList_GameObject_LayoutElement.ignoreLayout = true;
-        modList_GameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(140, -137);
+        modList_GameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(120, -137); // -20
         modList_GameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(440, 610);
         modList_GameObject.GetComponent<Image>().color = new Vector4(0f, 0f, 0f, 0.15f);
 
@@ -304,6 +309,16 @@ internal class TitleScreenModList
         var modList_GameObject_Label_RectTransform = modList_GameObject_Label.GetComponent<RectTransform>();
         modList_GameObject_Label_RectTransform.localScale = new Vector3(1, 1, 1);
         modList_GameObject_Label_RectTransform.anchoredPosition = new Vector2(0, 340);
+
+        // Mod list save index label
+        var index = GameObject.Find("MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/SlotGroup/SlotGroup H/SaveSlotContainer_Slot0/SaveSlot0/AnimationRoot/IndexNumberViewer");
+        modList_GameObject_saveIndexLabel = ObjectUtils.InstantiateAutoReference(index, modList_GameObject.transform, false);
+        modList_GameObject_saveIndexLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(-422, -2);
+        modList_GameObject_saveIndexLabel.GetComponent<TextMeshProUGUI>().text = "";
+
+        // Adjusting positions of cosmetic UI elements to make it look a little nicer.
+        GameObject.Find("MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/BG").transform.GetChild(2).GetComponent<RectTransform>().anchoredPosition = new Vector2(-20, -12);
+        GameObject.Find("MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/BG/Frame/UselessUI").transform.localPosition = new Vector2(-20, -215);
 
         // Adding listeners to save slot buttons to update modlist when selected
         for (int i = 0; i < 4; i++)
