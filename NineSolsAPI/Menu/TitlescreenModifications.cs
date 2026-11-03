@@ -292,7 +292,7 @@ internal class TitleScreenModList
         GameObject.Destroy(modList_GameObject.transform.Find("Viewport/Content/ButtonCandidate2").gameObject);
         var modList_GameObject_LayoutElement = modList_GameObject.AddComponent<LayoutElement>();
         modList_GameObject_LayoutElement.ignoreLayout = true;
-        modList_GameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(120, -137); // -20
+        modList_GameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(120, -137);
         modList_GameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(440, 610);
         modList_GameObject.GetComponent<Image>().color = new Vector4(0f, 0f, 0f, 0.15f);
 
