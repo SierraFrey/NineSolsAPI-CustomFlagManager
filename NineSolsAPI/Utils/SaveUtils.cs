@@ -100,14 +100,14 @@ public static class SaveUtils
         }
 
         active = true;
-        Log.Debug(count + " Inserted to flag dictionary.");
+        Log.Debug($"{count} Inserted to flag dictionary.");
     }
     private static GameFlagBase CreateNewFlagBase(BaseUnityPlugin owner, string name, GameFlagBase flag)
     {
         // As far as I know, there isn't a limit to how long a name/id can be.
         string GUID = owner.Info.Metadata.GUID;
-        
-        flag.SetSaveID(GUID + "." + name + ".");
+        flag.name = name;
+        flag.SetSaveID($"{GUID}.{name}.");
 
         if (!allCustomFlags.ContainsKey(GUID))
         {
@@ -123,7 +123,7 @@ public static class SaveUtils
         if (active)
         {
             Log.Error("New flags must be created before a save is loaded/created.");
-            throw new Exception();
+            return flag;
         }
 
         if (!modDict.ContainsKey(GUID))
@@ -131,7 +131,7 @@ public static class SaveUtils
             modDict[GUID] = new ModData(owner);
         }
 
-        flag.name = name;
+        
 
         try
         {
