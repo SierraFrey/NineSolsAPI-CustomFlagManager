@@ -78,6 +78,9 @@ public class NineSolsAPICore : BaseUnityPlugin {
             
             if (GameVersions.IsVersion(GameVersions.SpeedrunPatch))
                 harmony.PatchAll(typeof(Patches.PatchesSpeedrunpatch));
+
+            SaveUtils.SetURL(Instance, "https://github.com/nine-sols-modding/NineSolsAPI");
+                
         } catch (Exception e) {
             Log.Error($"Failed to initialized modding API: {e}");
         }
