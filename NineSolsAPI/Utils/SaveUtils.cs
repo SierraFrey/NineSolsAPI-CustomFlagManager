@@ -13,7 +13,7 @@ public static class SaveUtils
     private static NineSolsAPICore Instance => NineSolsAPICore.Instance;
     internal static SaveSlotModMetaData[] saveModMetaDataList = new SaveSlotModMetaData[5];
     
-    public static Dictionary<string, ModData> modDict = new()
+    internal static Dictionary<string, ModData> modDict = new()
     {
         {NineSolsAPICore.PluginGUID, new ModData(Instance)}
     };
