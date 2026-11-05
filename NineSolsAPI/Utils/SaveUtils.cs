@@ -74,7 +74,6 @@ public static class SaveUtils
         {
             return;
         }
-        SetURL(Instance, "https://github.com/nine-sols-modding/NineSolsAPI");
 
         Log.Debug("Inserting flags...");
 
