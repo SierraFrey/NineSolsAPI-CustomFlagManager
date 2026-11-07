@@ -14,6 +14,7 @@ namespace NineSolsAPI.Menu;
 internal class TitlescreenModifications {
     private UIControlGroup? group;
     private UIControlButton? button;
+    internal TitleScreenModList modList = new();
 
     private const bool Enable = true;
 
@@ -22,6 +23,7 @@ internal class TitlescreenModifications {
     }
 
     public void Unload() {
+        modList.Unload();
         if (button != null) Object.Destroy(button.gameObject);
         if (group != null) Object.Destroy(group.gameObject);
     }
@@ -32,8 +34,10 @@ internal class TitlescreenModifications {
 
         if (scene.name != "TitleScreenMenu") return;
         if (button) return;
+
         
-        TitleScreenModList.Setup();
+        modList.Load();
+        
         /*
         group = CreateUiControlGroup();
         button = CreateOptionsButton();
@@ -125,30 +129,37 @@ internal class TitleScreenModList
         DifferentVersion,
         New
     }
-    private static int[][] desyncTracker = new int[][]
+    private int[][] desyncTracker = new int[][]
     {
         new int[5],
         new int[5],
         new int[5]
     };
 
-    private static bool modListLoaded = false;
-    private static bool startGameConfirmed = false;
+    private bool modListLoaded = false;
+    private bool startGameConfirmed = false;
 
-    private static Dictionary<string, GameObject>[] modButtons = new Dictionary<string, GameObject>[5];
+    private Dictionary<string, GameObject>[] modButtons = new Dictionary<string, GameObject>[5]
+    {
+        new Dictionary<string, GameObject>(),
+        new Dictionary<string, GameObject>(),
+        new Dictionary<string, GameObject>(),
+        new Dictionary<string, GameObject>(),
+        new Dictionary<string, GameObject>()
+    };
 
-    private static GameObject modList_GameObject = null!;
-    private static GameObject buttonClone = null!;
-    private static GameObject modList_GameObject_saveIndexLabel = null!;
+    private GameObject modList_GameObject = null!;
+    private GameObject buttonClone = null!;
+    private GameObject modList_GameObject_saveIndexLabel = null!;
 
-    private static string modList_GameObject_Label_Text_String = "Mod List";
-    private static string URLConfirm_String = "Open the download page of {0}?\n({1})";
-    private static string NotSynced_ConfirmString = "This save's mods are not synced with your mods. Load anyway?\n({0} missing)\n({1} different version)\n({2} new)";
+    private static readonly string modList_GameObject_Label_Text_String = "Mod List";
+    private static readonly string URLConfirm_String = "Open the download page of {0}?\n({1})";
+    private static readonly string NotSynced_ConfirmString = "This save's mods are not synced with your mods. Load anyway?\n({0} missing)\n({1} different version)\n({2} new)";
 
     private static readonly Color RED = new Vector4(1f, 0f, 0f, 0.25f);
     private static readonly Color ORANGE = new Vector4(1f, 0.5f, 0f, 0.25f);
 
-    internal static bool CheckModDesyncsBeforeLoadSave(SaveSlotUIButton slotButtonInstance)
+    internal bool CheckModDesyncsBeforeLoadSave(SaveSlotUIButton slotButtonInstance)
     {
         if (startGameConfirmed)
         {
@@ -169,7 +180,7 @@ internal class TitleScreenModList
         return true;
     }
 
-    private static void LoadModList()
+    private void LoadModList()
     {
         var SavePanel_BackButton = GameObject.Find("MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/SavePanel_BackButton");
         buttonClone = ObjectUtils.InstantiateAutoReference(SavePanel_BackButton, modList_GameObject.transform.Find("Viewport/Content"), false);
@@ -195,8 +206,6 @@ internal class TitleScreenModList
 
         for (int i = 0; i < 5; i++)
         {
-            modButtons[i] = new Dictionary<string, GameObject>();
-
             SaveSlotModMetaData? meta = saveModMetaDataList[i];
 
             Dictionary<string, ModData>? slotModDict = saveModMetaDataList[i]?.modList.ToDictionary(mod => mod.guid);
@@ -246,7 +255,7 @@ internal class TitleScreenModList
         modListLoaded = true;
     }
 
-    private static void DisplayModListForSelectedFile(UIControlButton button)
+    private void DisplayModListForSelectedFile(UIControlButton button)
     {
         startGameConfirmed = false;
         if (!modListLoaded)
@@ -267,11 +276,23 @@ internal class TitleScreenModList
         }
     }
 
-    public static void Setup()
+    public void Unload()
     {
         modListLoaded = false;
         startGameConfirmed = false;
-
+        GameObject.Destroy(modList_GameObject);
+        GameObject.Find("MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/BG").transform.GetChild(2).GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -12);
+        GameObject.Find("MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/BG/Frame/UselessUI").transform.localPosition = new Vector2(0, -215);
+        foreach (var save in modButtons)
+        {
+            save.Clear();
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            string slotpath = "/MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/SlotGroup/SlotGroup H/";
+            GameObject slot = GameObject.Find($"{slotpath}SaveSlotContainer_Slot{i}/SaveSlot{i}");
+            slot.GetComponent<SaveSlotUIButton>().OnSelectedEvent.RemoveListener(DisplayModListForSelectedFile);
+        }
         for (int i = 0; i < desyncTracker.Length; i++)
         {
             for (int j = 0; j < 3; j++)
@@ -279,7 +300,12 @@ internal class TitleScreenModList
                 desyncTracker[i][j] = 0;
             }
         }
+    }
 
+    public void Load()
+    {
+        Unload();
+        
         // Mod list window
         GameObject ScrollView = GameObject.Find("/MenuLogic").transform.Find("Scroll View").gameObject;
 
