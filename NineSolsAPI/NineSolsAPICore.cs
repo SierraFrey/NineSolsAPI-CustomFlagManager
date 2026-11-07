@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using JetBrains.Annotations;
 using NineSolsAPI.Menu;
 using NineSolsAPI.Preload;
+using NineSolsAPI.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -26,7 +27,7 @@ public class NineSolsAPICore : BaseUnityPlugin {
     private Preloader preloader = null!;
     internal ToastManager ToastManager = null!;
     internal KeybindManager KeybindManager = new();
-    private TitlescreenModifications titlescreenModifications = new();
+    internal TitlescreenModifications titlescreenModifications = new();
     private Harmony harmony = null!;
 
     private RectTransform? progressBar;
@@ -80,7 +81,7 @@ public class NineSolsAPICore : BaseUnityPlugin {
                 harmony.PatchAll(typeof(Patches.PatchesSpeedrunpatch));
 
             SaveUtils.SetURL(Instance, "https://github.com/nine-sols-modding/NineSolsAPI");
-                
+
         } catch (Exception e) {
             Log.Error($"Failed to initialized modding API: {e}");
         }
