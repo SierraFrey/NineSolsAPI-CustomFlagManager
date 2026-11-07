@@ -35,7 +35,8 @@ public class Patches {
     [HarmonyPrefix]
     private static bool Submit(SaveSlotUIButton __instance)
     {
-        return TitleScreenModList.CheckModDesyncsBeforeLoadSave(__instance);
+        bool result = NineSolsAPICore.Instance.titlescreenModifications.modList?.CheckModDesyncsBeforeLoadSave(__instance) ?? true;
+        return result;
     }
     
     [HarmonyPatch(typeof(StartMenuLogic), nameof(StartMenuLogic.CreateOrLoadSaveSlotAndPlay))]
