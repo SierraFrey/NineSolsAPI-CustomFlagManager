@@ -3,7 +3,6 @@ using HarmonyLib;
 using NineSolsAPI.Preload;
 using UnityEngine.Device;
 using UnityEngine.SceneManagement;
-using NineSolsAPI.Menu;
 using NineSolsAPI.Utils;
 
 namespace NineSolsAPI.Patches;
