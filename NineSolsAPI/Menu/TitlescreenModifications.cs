@@ -155,7 +155,6 @@ internal class TitleScreenModList
             return true;
         }
         int slotNumber = (int)slotButtonInstance.name[8] - 48;
-        SaveSlotModMetaData meta = saveModMetaDataList[slotNumber];
 
         int Missing = desyncTracker[(int) Desyncs.Missing][slotNumber];
         int DifferentVersion = desyncTracker[(int) Desyncs.DifferentVersion][slotNumber];
