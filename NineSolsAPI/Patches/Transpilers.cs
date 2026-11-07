@@ -105,7 +105,11 @@ Everything seems to work fine afterward, but I'm worried that what I changed is 
             if (overwriteFixInsertionIndex == -1 || readMetaInsertionIndex == -1)
             {
                 Log.Error("<ReadMetaInSave>d__109 MoveNext transpiler failed!");
-                return instructions;
+                foreach (var instruction in instructions)
+                {
+                    Log.Error($"{instruction.opcode} {instruction.operand}");
+                }
+                return null!; // As stated above, patching with the instructions unchanged somehow breaks it. Returning a null seems to have Harmony cancel the patch and leave the instructions alone.
             }
 
             code[overwriteFixInsertionIndex].opcode = OpCodes.Pop; // The "fix."
