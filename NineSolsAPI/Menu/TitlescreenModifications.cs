@@ -152,7 +152,7 @@ internal class TitleScreenModList
     private GameObject buttonClone = null!;
     private GameObject modList_GameObject_saveIndexLabel = null!;
 
-    private static readonly string modList_GameObject_Label_Text_String = "Mod List";
+    private static readonly string modList_GameObject_Label_Text_String = "";
     private static readonly string URLConfirm_String = "Open the download page of {0}?\n({1})";
     private static readonly string NotSynced_ConfirmString = "This save's mods are not synced with your mods. Load anyway?\n({0} missing)\n({1} different version)\n({2} new)";
 
@@ -322,7 +322,7 @@ internal class TitleScreenModList
         modList_GameObject.GetComponent<Image>().color = new Vector4(0f, 0f, 0f, 0.15f);
 
         // Mod list label
-        var modList_GameObject_Label = new GameObject("Mod List");
+        var modList_GameObject_Label = new GameObject("Label");
         modList_GameObject_Label.transform.SetParent(modList_GameObject.transform);
 
         var modList_GameObject_Label_Text = modList_GameObject_Label.AddComponent<TextMeshProUGUI>();
