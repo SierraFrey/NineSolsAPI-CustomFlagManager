@@ -3,86 +3,39 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
 using JetBrains.Annotations;
+using NineSolsAPI.Utils;
 
-
-namespace NineSolsAPI.Utils;
+namespace NineSolsAPI;
 
 [PublicAPI]
-public static class SaveUtils
+public class CustomFlagManager
 {
-    private static NineSolsAPICore Instance => NineSolsAPICore.Instance;
+    // STATIC
     internal static SaveSlotModMetaData[] saveModMetaDataList = new SaveSlotModMetaData[5];
 
-    internal static Dictionary<string, ModData> modDict = new()
-    {
-        {NineSolsAPICore.PluginGUID, new ModData(Instance)}
-    };
+    internal static Dictionary<string, CustomFlagManager> allClassInstances = new();
     internal static Dictionary<string, Dictionary<string, GameFlagBase>> allCustomFlags = new()
     {
         {NineSolsAPICore.PluginGUID, new Dictionary<string, GameFlagBase>()}
     };
 
-    private static bool active = false;
-
-    public static ScriptableDataBool CreateScriptableDataBool(BaseUnityPlugin owner, string name, bool defaultValue = false)
-    {
-        ScriptableDataBool flag = new ScriptableDataBool();
-        flag.field = new FlagFieldBool();
-        flag.CurrentValue = defaultValue;
-        return (ScriptableDataBool)CreateNewFlagBase(owner, name, flag);
-    }
-    public static GameFlagInt CreateGameFlagInt(BaseUnityPlugin owner, string name, int defaultValue = 0)
-    {
-        GameFlagInt flag = new GameFlagInt();
-        flag.field = new FlagFieldInt();
-        flag.CurrentValue = defaultValue;
-        return (GameFlagInt)CreateNewFlagBase(owner, name, flag);
-    }
-    public static ScriptableDataFloat CreateScriptableDataFloat(BaseUnityPlugin owner, string name, float defaultValue = 0f)
-    {
-        ScriptableDataFloat flag = new ScriptableDataFloat();
-        flag.field = new FlagFieldFloat();
-        flag.CurrentValue = defaultValue;
-        return (ScriptableDataFloat)CreateNewFlagBase(owner, name, flag);
-    }
-    public static GameFlagString CreateGameFlagString(BaseUnityPlugin owner, string name, string defaultValue = "")
-    {
-        GameFlagString flag = new GameFlagString();
-        flag.field = new FlagFieldString();
-        flag.CurrentValue = defaultValue;
-        return (GameFlagString)CreateNewFlagBase(owner, name, flag);
-    }
+    private static bool flagsInserted = false;
     
-    public static void SetURL(BaseUnityPlugin owner, string url)
+    internal static void InsertCustomFlags()
     {
-        if (active)
-        {
-            Log.Error("SetURL must be called before a save is loaded/created.");
-            return;
-        }
-        string GUID = owner.Info.Metadata.GUID;
-        if (!modDict.ContainsKey(GUID))
-        {
-            modDict[GUID] = new ModData(owner);
-        }
-        modDict[GUID].url = url;
-    }
-
-    internal static void Start()
-    {
-        if (active)
+        if (flagsInserted)
         {
             return;
         }
 
         Log.Debug("Inserting flags...");
 
-        for (int i = modDict.Count - 1; i >= 0; i--)
+        for (int i = allClassInstances.Count - 1; i >= 0; i--)
         {
-            var guid = modDict.ElementAt(i).Key;
+            var guid = allClassInstances.ElementAt(i).Key;
             if (!allCustomFlags.ContainsKey(guid))
             {
-                modDict.Remove(guid);
+                allClassInstances.Remove(guid);
                 continue;
             }
             foreach (var flag in allCustomFlags[guid].Values)
@@ -93,14 +46,15 @@ public static class SaveUtils
         }
 
         int count = 0;
-        foreach (var meta in modDict.Values)
+        foreach (var instance in allClassInstances.Values)
         {
-            count += meta.flagCount;
+            count += instance.modData.flagCount;
         }
 
-        active = true;
+        flagsInserted = true;
         Log.Debug($"{count} Inserted to flag dictionary.");
     }
+
     private static GameFlagBase CreateNewFlagBase(BaseUnityPlugin owner, string name, GameFlagBase flag)
     {
         // As far as I know, there isn't a limit to how long a name/id can be.
@@ -118,19 +72,11 @@ public static class SaveUtils
             return allCustomFlags[GUID][flag.FinalSaveID];
         }
 
-        
-        if (active)
+        if (flagsInserted)
         {
             Log.Error("New flags must be created before a save is loaded/created.");
             return flag;
         }
-
-        if (!modDict.ContainsKey(GUID))
-        {
-            modDict[GUID] = new ModData(owner);
-        }
-
-        
 
         try
         {
@@ -140,20 +86,20 @@ public static class SaveUtils
         {
             Log.Error($"Flag creation failed: {e}");
         }
-        
-        modDict[GUID].flagCount++;
+
+        allClassInstances[GUID].modData.flagCount++;
         return flag;
     }
 
     internal static string InsertModListBeforeBinarySerialization(string? meta)
     {
-        if (meta == null || modDict.Count <= 1)
+        if (meta == null || allClassInstances.Count <= 1)
         {
             return meta!;
         }
         string output = meta;
         SaveSlotModMetaData modMetaData = new();
-        modMetaData.modList = new(SaveUtils.modDict.Values);
+        modMetaData.modList = CustomFlagManager.allClassInstances.Values.Select(cfm => cfm.modData).ToList();
         string modMetaDataString = JsonUtils.Serialize(modMetaData);
         modMetaDataString = modMetaDataString.Remove(0, 1);
         output = output.Remove(output.Length - 1, 1);
@@ -175,6 +121,60 @@ public static class SaveUtils
             saveModMetaDataList[slotNumber] = JsonUtils.Deserialize<SaveSlotModMetaData>(meta)!;
         }
     }
+
+    
+    // NON-STATIC
+
+    private BaseUnityPlugin owner = null!;
+    internal ModData modData = null!;
+
+    internal string url => modData.url;
+    internal string name => modData.name;
+    internal string guid => modData.guid;
+    internal string version => modData.version;
+    internal int flagCount => modData.flagCount;
+    
+    public CustomFlagManager(BaseUnityPlugin owner, string url = "")
+    {
+        this.modData = new(owner, url);
+        this.owner = owner;
+
+        if (CustomFlagManager.allClassInstances.ContainsKey(modData.guid))
+        {
+            CustomFlagManager.allClassInstances.Remove(modData.guid);
+        }
+        
+        CustomFlagManager.allClassInstances.Add(modData.guid, this);
+    }
+    
+    public ScriptableDataBool CreateScriptableDataBool(string name, bool defaultValue = false)
+    {
+        ScriptableDataBool flag = new ScriptableDataBool();
+        flag.field = new FlagFieldBool();
+        flag.CurrentValue = defaultValue;
+        return (ScriptableDataBool)CreateNewFlagBase(owner, name, flag);
+    }
+    public GameFlagInt CreateGameFlagInt(string name, int defaultValue = 0)
+    {
+        GameFlagInt flag = new GameFlagInt();
+        flag.field = new FlagFieldInt();
+        flag.CurrentValue = defaultValue;
+        return (GameFlagInt)CreateNewFlagBase(owner, name, flag);
+    }
+    public ScriptableDataFloat CreateScriptableDataFloat(string name, float defaultValue = 0f)
+    {
+        ScriptableDataFloat flag = new ScriptableDataFloat();
+        flag.field = new FlagFieldFloat();
+        flag.CurrentValue = defaultValue;
+        return (ScriptableDataFloat)CreateNewFlagBase(owner, name, flag);
+    }
+    public GameFlagString CreateGameFlagString(string name, string defaultValue = "")
+    {
+        GameFlagString flag = new GameFlagString();
+        flag.field = new FlagFieldString();
+        flag.CurrentValue = defaultValue;
+        return (GameFlagString)CreateNewFlagBase(owner, name, flag);
+    }
 }
 
 [Serializable]
@@ -187,13 +187,14 @@ internal class ModData
         version = "";
         url = "";
     }
-    public ModData(BaseUnityPlugin mod)
+    public ModData(BaseUnityPlugin mod, string url = "")
     {
         BepInPlugin meta = mod.Info.Metadata;
-        name = meta.Name;
-        guid = meta.GUID;
-        version = meta.Version.ToString();
-        url = "";
+        this.name = meta.Name;
+        this.guid = meta.GUID;
+        this.version = meta.Version.ToString();
+        this.url = url;
+        this.flagCount = 0;
     }
 
     public string url;
