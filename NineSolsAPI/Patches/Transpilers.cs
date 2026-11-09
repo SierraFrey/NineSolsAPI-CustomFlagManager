@@ -34,6 +34,10 @@ public class Transpilers
         if (insertionIndex == -1)
         {
             Log.Error("GameFlagManager FlagsToBinary transpiler failed!");
+            foreach (var instruction in instructions)
+            {
+                Log.Error($"{instruction.opcode} {instruction.operand}");
+            }
             return instructions;
         }
 
