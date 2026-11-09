@@ -5,7 +5,6 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using NineSolsAPI.Menu;
 using NineSolsAPI.Preload;
-using NineSolsAPI.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -29,6 +28,7 @@ public class NineSolsAPICore : BaseUnityPlugin {
     internal KeybindManager KeybindManager = new();
     internal TitlescreenModifications titlescreenModifications = new();
     private Harmony harmony = null!;
+    internal CustomFlagManager customFlagManager = null!;
 
     private RectTransform? progressBar;
 
@@ -80,7 +80,7 @@ public class NineSolsAPICore : BaseUnityPlugin {
             if (GameVersions.IsVersion(GameVersions.SpeedrunPatch))
                 harmony.PatchAll(typeof(Patches.PatchesSpeedrunpatch));
 
-            SaveUtils.SetURL(Instance, "https://github.com/nine-sols-modding/NineSolsAPI");
+            customFlagManager = new(Instance, "https://github.com/nine-sols-modding/NineSolsAPI");
 
         } catch (Exception e) {
             Log.Error($"Failed to initialized modding API: {e}");
