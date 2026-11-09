@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using NineSolsAPI.Utils;
 
 namespace NineSolsAPI.Patches;
 
@@ -31,8 +30,9 @@ public class Transpilers
             }
         }
 
-        if (insertionIndex == -1)
+        if (insertionIndex == -1 || true)
         {
+            NineSolsAPICore.Instance.titlescreenModifications.modList.transpilerFailed = true;
             Log.Error("GameFlagManager FlagsToBinary transpiler failed!");
             foreach (var instruction in instructions)
             {
@@ -41,7 +41,7 @@ public class Transpilers
             return instructions;
         }
 
-        code.Insert(insertionIndex, CodeInstruction.Call(() => SaveUtils.InsertModListBeforeBinarySerialization(default)));
+        code.Insert(insertionIndex, CodeInstruction.Call(() => CustomFlagManager.InsertModListBeforeBinarySerialization(default)));
         return code;
     }
 /*
@@ -108,6 +108,7 @@ Everything seems to work fine afterward, but I'm worried that what I changed is 
             
             if (overwriteFixInsertionIndex == -1 || readMetaInsertionIndex == -1)
             {
+                NineSolsAPICore.Instance.titlescreenModifications.modList.transpilerFailed = true;
                 Log.Error("<ReadMetaInSave>d__109 MoveNext transpiler failed!");
                 foreach (var instruction in instructions)
                 {
@@ -123,7 +124,7 @@ Everything seems to work fine afterward, but I'm worried that what I changed is 
                 new CodeInstruction(OpCodes.Dup),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, accessField),
-                new CodeInstruction(CodeInstruction.Call(() => SaveUtils.ReadModListBeforeJSONDeserialization(default, default)))
+                new CodeInstruction(CodeInstruction.Call(() => CustomFlagManager.ReadModListBeforeJSONDeserialization(default, default)))
             };
             code.InsertRange(readMetaInsertionIndex, readMetaInstructions);
 
