@@ -30,7 +30,7 @@ public class Transpilers
             }
         }
 
-        if (insertionIndex == -1 || true)
+        if (insertionIndex == -1)
         {
             NineSolsAPICore.Instance.titlescreenModifications.modList.transpilerFailed = true;
             Log.Error("GameFlagManager FlagsToBinary transpiler failed!");
