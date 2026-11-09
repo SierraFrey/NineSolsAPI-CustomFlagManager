@@ -5,17 +5,19 @@ This is my attempt at fixing these problems. Current features include:
 
 Methods that help with creating new save flags. They must be called before a file is loaded/created.
 
-CreateScriptableDataBool
+CreateScriptableDataBool()
 
-CreateGameFlagInt
+CreateGameFlagInt()
 
-CreateScriptableDataFloat
+CreateScriptableDataFloat()
 
-CreateGameFlagString
+CreateGameFlagString()
 
 
-All of them require at least 2 parameters: The instance of the plugin calling it, and a unique name for the flag. The API does the rest for you.
+The methods will need to be called from a CustomFlagManager instance. The methods require a unique name for the flag and optionally a default value. The API does the rest for you.
+
 
 A list that shows which mods have data in a save file when selecting it. Clicking on a mod in a list can take you to a download page if it has one.
+
 
 Warnings for when you attempt to load a save when you don't have a mod in the list, you have a different version of a mod in the list, or you have a mod not in the list.
