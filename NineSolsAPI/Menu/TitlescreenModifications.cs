@@ -120,8 +120,16 @@ internal class TitlescreenModifications {
 
 internal class TitleScreenModList
 {
-    private static SaveSlotModMetaData[] saveModMetaDataList => SaveUtils.saveModMetaDataList;
-    private static Dictionary<string, ModData> modDict => SaveUtils.modDict;
+    private static SaveSlotModMetaData[] saveModMetaDataList => CustomFlagManager.saveModMetaDataList;
+    private static Dictionary<string, CustomFlagManager> modDict => CustomFlagManager.allClassInstances;
+
+    private static readonly string modList_GameObject_Label_Text_String = "Mod List";
+    private static readonly string URLConfirm_String = "Open the download page of {0}?\n({1})";
+    private static readonly string notSyncedConfirm_String = "This save's mods are not synced with your mods. Load anyway?\n({0} missing)\n({1} different version)\n({2} new)";
+    private static readonly string transpilerFailedWarningLabel_Txt_String = "An error occured where the save file mod list metadata can't be read/written. Check the console for more details. Proceed at your own risk!";
+
+    private static readonly Color RED = new Vector4(1f, 0f, 0f, 0.25f);
+    private static readonly Color ORANGE = new Vector4(1f, 0.5f, 0f, 0.25f);
 
     private enum Desyncs
     {
@@ -138,6 +146,7 @@ internal class TitleScreenModList
 
     private bool modListLoaded = false;
     private bool startGameConfirmed = false;
+    internal bool transpilerFailed = false;
 
     private Dictionary<string, GameObject>[] modButtons = new Dictionary<string, GameObject>[5]
     {
@@ -151,13 +160,7 @@ internal class TitleScreenModList
     private GameObject modList_GameObject = null!;
     private GameObject buttonClone = null!;
     private GameObject modList_GameObject_saveIndexLabel = null!;
-
-    private static readonly string modList_GameObject_Label_Text_String = "Mod List";
-    private static readonly string URLConfirm_String = "Open the download page of {0}?\n({1})";
-    private static readonly string NotSynced_ConfirmString = "This save's mods are not synced with your mods. Load anyway?\n({0} missing)\n({1} different version)\n({2} new)";
-
-    private static readonly Color RED = new Vector4(1f, 0f, 0f, 0.25f);
-    private static readonly Color ORANGE = new Vector4(1f, 0.5f, 0f, 0.25f);
+    private GameObject transpilerFailedWarningLabel = null!;
 
     internal bool CheckModDesyncsBeforeLoadSave(SaveSlotUIButton slotButtonInstance)
     {
@@ -174,7 +177,7 @@ internal class TitleScreenModList
         if (Missing > 0 || DifferentVersion > 0 || New > 0)
         {
             startGameConfirmed = true;
-            SingletonBehaviour<StartMenuLogic>.Instance.confirmPanel.ShowConfirm(string.Format(NotSynced_ConfirmString, Missing, DifferentVersion, New), () => slotButtonInstance.Submit());
+            SingletonBehaviour<StartMenuLogic>.Instance.confirmPanel.ShowConfirm(string.Format(notSyncedConfirm_String, Missing, DifferentVersion, New), () => slotButtonInstance.Submit());
             return false;
         }
         return true;
@@ -244,7 +247,7 @@ internal class TitleScreenModList
             }
             
             // Check for new mod(s)
-            foreach (ModData data in modDict.Values)
+            foreach (CustomFlagManager data in modDict.Values)
             {
                 if (slotModDict != null && !slotModDict.ContainsKey(data.guid) && data.flagCount > 0)
                 {
@@ -352,5 +355,20 @@ internal class TitleScreenModList
             GameObject slot = GameObject.Find($"{slotpath}SaveSlotContainer_Slot{i}/SaveSlot{i}");
             slot.GetComponent<SaveSlotUIButton>().OnSelectedEvent.AddListener(DisplayModListForSelectedFile);
         }
+
+        // Warning label for incase the transpilers fail
+        transpilerFailedWarningLabel = ObjectUtils.InstantiateAutoReference(modList_GameObject_Label, modList_GameObject_Label.transform.parent, false);
+        transpilerFailedWarningLabel.name = "transpilerFailedWarningLabel";
+
+        RectTransform transpilerFailedWarningLabel_Rect = transpilerFailedWarningLabel.GetComponent<RectTransform>();
+        transpilerFailedWarningLabel_Rect.anchoredPosition = new Vector2(0, 0);
+        transpilerFailedWarningLabel_Rect.sizeDelta = new Vector2(440, 200);
+
+        TextMeshProUGUI transpilerFailedWarningLabel_Txt = transpilerFailedWarningLabel.GetComponent<TextMeshProUGUI>();
+        transpilerFailedWarningLabel_Txt.enableWordWrapping = true;
+        transpilerFailedWarningLabel_Txt.text = transpilerFailedWarningLabel_Txt_String;
+        transpilerFailedWarningLabel_Txt.color = Color.red;
+
+        transpilerFailedWarningLabel.SetActive(transpilerFailed);
     }
 }
