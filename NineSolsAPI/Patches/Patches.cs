@@ -3,7 +3,6 @@ using HarmonyLib;
 using NineSolsAPI.Preload;
 using UnityEngine.Device;
 using UnityEngine.SceneManagement;
-using NineSolsAPI.Utils;
 
 namespace NineSolsAPI.Patches;
 
@@ -42,7 +41,7 @@ public class Patches {
     [HarmonyPrefix]
     private static void CreateOrLoadSaveSlotAndPlay()
     {
-        SaveUtils.Start();
+        CustomFlagManager.InsertCustomFlags();
     }
     
 }
