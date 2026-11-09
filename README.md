@@ -1,4 +1,4 @@
-Example mod: https://github.com/SierraFrey/NineSolsAPI-SaveUtils-ExampleMod
+Example mod: https://github.com/SierraFrey/NineSolsAPI-CustomFlagManager-ExampleMod
 
 There was an idea for a mod I had that would use custom data in a save file, but I realized there's some flaws with it. There's no conventional way of distinguishing which save files have modded data and what mod data they contain.
 This is my attempt at fixing these problems. Current features include:
