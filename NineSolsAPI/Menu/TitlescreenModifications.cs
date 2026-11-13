@@ -191,9 +191,18 @@ internal class TitleScreenModList
         GameObject.Destroy(buttonClone.transform.Find("BackgroundImage/Frame").gameObject);
 
         var buttonCloneText = buttonClone.transform.Find("Text (TMP)").gameObject.GetComponent<TextMeshProUGUI>();
+        buttonCloneText.autoSizeTextContainer = true;
         buttonCloneText.text = "";
-        buttonCloneText.characterSpacing = 0;
-        buttonCloneText.fontSizeMin = 26;
+        buttonCloneText.characterSpacing = -5;
+        buttonCloneText.fontSizeMax = 32;
+        buttonCloneText.fontSizeMin = 14;
+
+        var buttonCloneText_RectTransform = buttonCloneText.GetComponent<RectTransform>();
+        buttonCloneText_RectTransform.anchoredPosition = Vector2.zero;
+        buttonCloneText_RectTransform.anchoredPosition += new Vector2(-200, 0);
+        buttonCloneText_RectTransform.sizeDelta = new Vector2(400, 0);
+        buttonCloneText_RectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        buttonCloneText_RectTransform.anchorMin = new Vector2(0.5f, 0.5f);
 
         buttonClone.transform.localPosition = new Vector3(220f, -50f, 0f);
         buttonClone.transform.Find("Outline").gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(300, -5);
