@@ -39,9 +39,18 @@ public class Patches {
     
     [HarmonyPatch(typeof(StartMenuLogic), nameof(StartMenuLogic.CreateOrLoadSaveSlotAndPlay))]
     [HarmonyPrefix]
-    private static void CreateOrLoadSaveSlotAndPlay()
+    private static void CreateOrLoadSaveSlotAndPlay(bool SaveExists)
+    {
+        if (SaveExists)
+        {
+            CustomFlagManager.InsertCustomFlags();
+        }
+    }
+
+    [HarmonyPatch(typeof(StartMenuLogic), "NewGameChangeScene")]
+    [HarmonyPrefix]
+    private static void NewGameChangeScene(int slotIndex)
     {
         CustomFlagManager.InsertCustomFlags();
     }
-    
 }
