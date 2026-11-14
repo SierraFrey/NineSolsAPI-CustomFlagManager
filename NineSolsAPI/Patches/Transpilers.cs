@@ -44,32 +44,14 @@ public class Transpilers
         code.Insert(insertionIndex, CodeInstruction.Call(() => CustomFlagManager.InsertModListBeforeBinarySerialization(default)));
         return code;
     }
-/*
-How I figured out how to get the modlist metadata:
-
-I can't just read the result of LoadMetaJsonFromBinarySave() from the GameFlagManager class because yes, it does get me the modlist metadata,
-however savefiles do not contain any data on what save slot it belongs to. I can find the metadata alongside its slot number in
-LoadAllSaveSlotMetaForMainMenu() In the SaveManager class.
-
-LoadAllSaveSlotMetaForMainMenu() iterates through every save slot and calls a method (ReadMetaInSave()) that returns a
-SaveSlotMetaData object. The modlist data inside the string json metadata is lost when it gets turned into a SaveSlotMetaData
-object before it gets returned so I need to transpile ReadMetaInSave() for the string json metadata.
-
-The compiler performs some wacky stuff on async methods. The actual CIL instructions for ReadMetaInSave()
-(which is an async method) that I need to transpile is in a private method called MoveNext() within a private struct called
-<ReadMetaInSave>d__109. [HarmonyTargetMethod] allows me to transpile the method, but it needs to be in its own class as it
-would otherwise affect the other transpilers. Unfortunately, there is one small issue with transpiling it.
-
-For some unholy reason, when transpiled, even with ZERO changes, the method returns a blank SaveSlotMetaData object, which causes
-The UI to think that there is no save data. After some experimenting, the problem is that a blank SaveSlotMetaData is
-overwriting the proper return variable everytime, yet it seems impossible for the logic to lead up to the overwrite?
-
-The "fix" I came up with was to replace the overwrite command with a pop to remove the blank SaveSlotMetaData from the stack.
-Everything seems to work fine afterward, but I'm worried that what I changed is important for some edge case or something else I don't know about.
-*/
 
     public class ReadMetaInSave_TargetMethod
     {
+        /*
+        Because ReadMetaInSave() is an async method, the compiler turns it into a state machine. The CIL instructions that are needed to transpile requires HarmonyTargetMethod.
+        HarmonyTargetMethod needs to be in its own class as it would otherwise affect the other transpilers.
+        Even without changing anything, transpiler breaks for no reason unless I replace a specific instruction that I hope wasn't important for something else.
+        */
         private static Type accessStruct = AccessTools.Inner(typeof(SaveManager), "<ReadMetaInSave>d__109");
         private static MethodInfo accessMethod = AccessTools.Method(accessStruct, "MoveNext");
         private static FieldInfo accessField = accessStruct.GetField("saveDirectory");
