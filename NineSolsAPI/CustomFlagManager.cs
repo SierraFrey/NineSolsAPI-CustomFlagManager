@@ -14,10 +14,6 @@ public class CustomFlagManager
     internal static SaveSlotModMetaData[] saveModMetaDataList = new SaveSlotModMetaData[5];
 
     internal static Dictionary<string, CustomFlagManager> allClassInstances = new();
-    internal static Dictionary<string, Dictionary<string, GameFlagBase>> allCustomFlags = new()
-    {
-        {NineSolsAPICore.PluginGUID, new Dictionary<string, GameFlagBase>()}
-    };
 
     private static bool flagsInserted = false;
     
@@ -32,13 +28,15 @@ public class CustomFlagManager
 
         for (int i = allClassInstances.Count - 1; i >= 0; i--)
         {
-            var guid = allClassInstances.ElementAt(i).Key;
-            if (!allCustomFlags.ContainsKey(guid))
+            var GUID = allClassInstances.ElementAt(i).Key;
+            var instanceFlags = allClassInstances[GUID]._flags;
+            
+            if (instanceFlags.Count == 0 && i != 0)
             {
-                allClassInstances.Remove(guid);
+                allClassInstances.Remove(GUID);
                 continue;
             }
-            foreach (var flag in allCustomFlags[guid].Values)
+            foreach (var flag in instanceFlags.Values)
             {
                 SaveManager.Instance.allFlags.FlagDict.Add(flag.FinalSaveID, flag);
                 SaveManager.Instance.allFlags.Flags.Add(flag);
@@ -48,7 +46,7 @@ public class CustomFlagManager
         int count = 0;
         foreach (var instance in allClassInstances.Values)
         {
-            count += instance.modData.flagCount;
+            count += instance.flags.Count;
         }
 
         flagsInserted = true;
@@ -61,17 +59,13 @@ public class CustomFlagManager
         string GUID = owner.Info.Metadata.GUID;
         flag.name = name;
         flag.SetSaveID($"{GUID}.{name}.");
-
-        if (!allCustomFlags.ContainsKey(GUID))
-        {
-            allCustomFlags.Add(GUID, new Dictionary<string, GameFlagBase>());
-        }
-        else if (allCustomFlags[GUID].ContainsKey(flag.FinalSaveID))
+        var instanceFlags = allClassInstances[GUID]._flags;
+        if (instanceFlags.ContainsKey(flag.FinalSaveID))
         {
             // Mainly for plugins that are loaded with ScriptEngine. Prevents errors when reloading ingame.
-            return allCustomFlags[GUID][flag.FinalSaveID];
+            return instanceFlags[flag.FinalSaveID];
         }
-
+        
         if (flagsInserted)
         {
             Log.Error("New flags must be created before a save is loaded/created.");
@@ -80,14 +74,13 @@ public class CustomFlagManager
 
         try
         {
-            allCustomFlags[GUID].Add(flag.FinalSaveID, flag);
+            instanceFlags.Add(flag.FinalSaveID, flag);
         }
         catch (ArgumentException e)
         {
             Log.Error($"Flag creation failed: {e}");
         }
 
-        allClassInstances[GUID].modData.flagCount++;
         return flag;
     }
 
@@ -122,8 +115,11 @@ public class CustomFlagManager
         }
     }
 
-    
+
     // NON-STATIC
+
+    public Dictionary<string, GameFlagBase> flags => _flags;
+    internal Dictionary<string, GameFlagBase> _flags = null!;
 
     private BaseUnityPlugin owner = null!;
     internal ModData modData = null!;
@@ -132,10 +128,11 @@ public class CustomFlagManager
     internal string name => modData.name;
     internal string guid => modData.guid;
     internal string version => modData.version;
-    internal int flagCount => modData.flagCount;
+    internal int flagCount => flags.Count;
     
     public CustomFlagManager(BaseUnityPlugin owner, string url = "")
     {
+        this._flags = new();
         this.modData = new(owner, url);
         this.owner = owner;
 
@@ -182,10 +179,11 @@ internal class ModData
 {
     public ModData()
     {
+        url = "";
         name = "";
         guid = "";
         version = "";
-        url = "";
+        flagCount = 0;
     }
     public ModData(BaseUnityPlugin mod, string url = "")
     {
