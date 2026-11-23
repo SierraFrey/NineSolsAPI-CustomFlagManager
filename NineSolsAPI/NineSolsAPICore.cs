@@ -78,12 +78,16 @@ public class NineSolsAPICore : BaseUnityPlugin {
             harmony = new Harmony($"harmony-auto-{(object)Guid.NewGuid()}");
             harmony.PatchAll(typeof(Patches.Patches));
             harmony.PatchAll(typeof(Patches.SteamAPI));
-            harmony.PatchAll(typeof(Patches.Transpilers)); harmony.PatchAll(typeof(Patches.Transpilers.ReadMetaInSave_TargetMethod));
+            
 
             if (GameVersions.IsVersion(GameVersions.SpeedrunPatch))
                 harmony.PatchAll(typeof(Patches.PatchesSpeedrunpatch));
-
-            customFlagManager = new(Instance, true, "https://github.com/nine-sols-modding/NineSolsAPI");
+            else
+            {
+                harmony.PatchAll(typeof(Patches.PatchesCustomFlagManager)); harmony.PatchAll(typeof(Patches.PatchesCustomFlagManager.ReadMetaInSave_TargetMethod));
+                customFlagManager = new(Instance, true, "https://github.com/nine-sols-modding/NineSolsAPI");
+            }
+                
 
         } catch (Exception e) {
             Log.Error($"Failed to initialized modding API: {e}");

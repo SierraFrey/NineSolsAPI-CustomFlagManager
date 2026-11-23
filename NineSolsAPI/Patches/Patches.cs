@@ -28,29 +28,4 @@ public class Patches {
     [HarmonyPatch(typeof(GameLevel), nameof(GameLevel.Awake))]
     [HarmonyPrefix]
     private static bool GameLevelAwake() => !Preloader.IsPreloading;
-
-    [HarmonyPatch(typeof(SaveSlotUIButton), nameof(SaveSlotUIButton.Submit))]
-    [HarmonyPrefix]
-    private static bool Submit(SaveSlotUIButton __instance) {
-        return CustomFlagManager.CheckModDesyncsBeforeLoadSave(__instance);
-    }
-    
-    [HarmonyPatch(typeof(StartMenuLogic), nameof(StartMenuLogic.CreateOrLoadSaveSlotAndPlay))]
-    [HarmonyPrefix]
-    private static void CreateOrLoadSaveSlotAndPlay(int slotIndex, bool SaveExists) {
-        if (SaveExists)
-            CustomFlagManager.InsertCustomFlags(slotIndex);
-    }
-
-    [HarmonyPatch(typeof(StartMenuLogic), "NewGameChangeScene")]
-    [HarmonyPrefix]
-    private static void NewGameChangeScene(int slotIndex) {
-        CustomFlagManager.InsertCustomFlags(slotIndex);
-    }
-
-    [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.DeleteSave))]
-    [HarmonyPrefix]
-    private static void DeleteSave(int i) {
-        CustomFlagManager.DeleteSlot(i);
-    }
 }

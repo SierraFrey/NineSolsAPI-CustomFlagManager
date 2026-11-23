@@ -35,16 +35,8 @@ internal class TitlescreenModifications {
         if (scene.name != "TitleScreenMenu") return;
         if (button) return;
 
-        
-        modList.Load();
+        if (!GameVersions.IsVersion(GameVersions.SpeedrunPatch)) modList.Load();
 
-        
-        for (int i = 0; i < 4; i++) {
-            string slotpath = "/MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/SlotGroup/SlotGroup H/";
-            GameObject slot = GameObject.Find($"{slotpath}SaveSlotContainer_Slot{i}/SaveSlot{i}");
-            slot.GetComponent<SaveSlotUIButton>().OnSelectedEvent.AddListener((UIControlButton) => CustomFlagManager.startGameConfirmed = false);
-        }
-        
         /*
         group = CreateUiControlGroup();
         button = CreateOptionsButton();
@@ -283,7 +275,9 @@ internal class TitleScreenModList {
         for (int i = 0; i < 4; i++) {
             string slotpath = "/MenuLogic/MainMenuLogic/Providers/StartGame SaveSlotPanel/SlotGroup/SlotGroup H/";
             GameObject slot = GameObject.Find($"{slotpath}SaveSlotContainer_Slot{i}/SaveSlot{i}");
-            slot.GetComponent<SaveSlotUIButton>().OnSelectedEvent.AddListener(DisplayModListForSelectedFile);
+            var slotUiButton = slot.GetComponent<SaveSlotUIButton>();
+            slotUiButton.OnSelectedEvent.AddListener(DisplayModListForSelectedFile);
+            slotUiButton.OnSelectedEvent.AddListener((UIControlButton) => CustomFlagManager.startGameConfirmed = false);
         }
 
         // Warning label for incase the transpilers fail

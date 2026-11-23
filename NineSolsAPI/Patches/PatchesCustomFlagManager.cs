@@ -1,21 +1,47 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Reflection.Emit;
 using HarmonyLib;
+using System.Reflection.Emit;
 
 namespace NineSolsAPI.Patches;
 
 [HarmonyPatch]
-public class Transpilers {
-    // To include the modlist in the save metadata, transpiler inserts a CIL instruction 
-    // that calls InsertModListBeforeSerialization() to put the modlist into the metadata string json before it gets serialized to binary.
-    [HarmonyPatch(typeof(GameFlagManager), nameof(GameFlagManager.FlagsToBinary))]
+[SuppressMessage("ReSharper", "InconsistentNaming")]
+internal class PatchesCustomFlagManager {
+
+    [HarmonyPatch(typeof(SaveSlotUIButton), nameof(SaveSlotUIButton.Submit))]
+    [HarmonyPrefix]
+    private static bool Submit(SaveSlotUIButton __instance) {
+        return CustomFlagManager.CheckModDesyncsBeforeLoadSave(__instance);
+    }
+
+    [HarmonyPatch(typeof(StartMenuLogic), nameof(StartMenuLogic.CreateOrLoadSaveSlotAndPlay))]
+    [HarmonyPrefix]
+    private static void CreateOrLoadSaveSlotAndPlay(int slotIndex, bool SaveExists) {
+        if (SaveExists)
+            CustomFlagManager.InsertCustomFlags(slotIndex);
+    }
+
+    [HarmonyPatch(typeof(StartMenuLogic), "NewGameChangeScene")]
+    [HarmonyPrefix]
+    private static void NewGameChangeScene(int slotIndex) {
+        CustomFlagManager.InsertCustomFlags(slotIndex);
+    }
+
+    [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.DeleteSave))]
+    [HarmonyPrefix]
+    private static void DeleteSave(int i) {
+        CustomFlagManager.DeleteSlot(i);
+    }
+
+    [HarmonyPatch(typeof(GameFlagManager), "FlagsToBinary")]
     [HarmonyTranspiler]
     private static IEnumerable<CodeInstruction> FlagsToBinary_Transpiler(IEnumerable<CodeInstruction> instructions) {
         var code = new List<CodeInstruction>(instructions);
         int insertionIndex = -1;
-        for (int i = (code.Count - 1); i > 0; i--) { // Looks for the instruction that puts the save metadata string json on the stack.
+        for (int i = (code.Count - 1); i > 0; i--) {
             if (
                 code[i - 1].opcode == OpCodes.Callvirt &&
                 code[i].opcode == OpCodes.Call &&
@@ -74,7 +100,7 @@ public class Transpilers {
                     break;
                 }
             }
-            
+
             if (overwriteFixInsertionIndex == -1 || readMetaInsertionIndex == -1) {
                 NineSolsAPICore.Instance.titlescreenModifications.modList.transpilerFailed = true;
                 Log.Error("<ReadMetaInSave>d__109 MoveNext transpiler failed!");
